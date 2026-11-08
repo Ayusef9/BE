@@ -36,7 +36,6 @@ export class AuthService {
     const user = await this.usersService.create({
       name: dto.name,
       email: dto.email,
-      phone: dto.phone,
       passwordHash: await hashPassword(dto.password),
       role: Role.USER, // register publik selalu role user; vendor lewat /vendors/register
     });

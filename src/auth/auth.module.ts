@@ -10,7 +10,7 @@ import { JwtStrategy } from './jwt.strategy.js';
   imports: [
     UsersModule,
     PassportModule,
-    JwtModule.register({}), // secret & expiry diberikan per token di AuthService
+    JwtModule.register({}),
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],

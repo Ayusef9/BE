@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module.js';
+import { TransformResponseInterceptor } from './interceptors/transform-response/transform-response.interceptor.js';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -15,8 +16,11 @@ async function bootstrap() {
       whitelist: true, // buang field yang tidak ada di DTO
       forbidNonWhitelisted: true, // dan tolak request yang membawanya
       transform: true, // ubah payload/query menjadi instance DTO dan tipe yang benar
+      transformOptions: { enableImplicitConversion: true },
     }),
   );
+
+  app.useGlobalInterceptors(new TransformResponseInterceptor());
 
   // CORS hanya dibutuhkan dashboard web (mobile tidak terkena aturan CORS)
   const origins = config.get<string>('CORS_ORIGINS', 'http://localhost:5173').split(',');

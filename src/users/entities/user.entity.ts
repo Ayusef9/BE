@@ -36,12 +36,12 @@ export class User extends AppSoftDeleteEntity {
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive: boolean;
 
-  @OneToMany(() => DeviceToken, (token) => token.user)
+  @OneToMany(() => DeviceToken, (token: DeviceToken) => token.user)
   deviceTokens: DeviceToken[];
 
-  @OneToOne(() => Vendor, (vendor) => vendor.user)
+  @OneToOne(() => Vendor, (vendor: Vendor) => vendor.user)
   vendor: Relation<Vendor>;
 
-  @OneToMany(() => PlanMember, (member) => member.user)
+  @OneToMany(() => PlanMember, (member: PlanMember) => member.user)
   planMembers: PlanMember[];
 }

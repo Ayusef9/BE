@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -9,9 +9,18 @@ import { AuthModule } from './auth/auth.module.js';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard.js';
 import { RolesGuard } from './common/guards/roles.guard.js';
 import { validateEnv } from './config/env.validation.js';
+import { LogMiddlewareMiddleware } from './middleware/log-middleware/log-middleware.middleware.js';
 import { ALL_ENTITIES } from './database/entities.js';
+import { PlansModule } from './plans/plans.module.js';
+import { RecommendationsModule } from './recommendations/recommendations.module.js';
 import { UsersModule } from './users/users.module.js';
 import { VendorsModule } from './vendors/vendors.module.js';
+import { DealsModule } from './deals/deals.module.js';
+import { ChatModule } from './chat/chat.module.js';
+import { ChatbotModule } from './chatbot/chatbot.module.js';
+import { DocumentsModule } from './documents/documents.module.js';
+import { SavingsModule } from './savings/savings.module.js';
+import { SchedulerModule } from './scheduler/scheduler.module.js';
 
 @Module({
   imports: [
@@ -23,12 +32,12 @@ import { VendorsModule } from './vendors/vendors.module.js';
       useFactory: (config: ConfigService) => ({
         type: 'postgres' as const,
         host: config.get<string>('DB_HOST', 'localhost'),
-        port: Number(config.get<string>('DB_PORT', '5432')),
-        username: config.get<string>('DB_USERNAME'),
-        password: config.get<string>('DB_PASSWORD'),
-        database: config.get<string>('DB_DATABASE'),
+        port: Number(config.get<string>('DB_PORT', '5434')),
+        username: config.get<string>('DB_USERNAME', 'root'),
+        password: config.get<string>('DB_PASSWORD', 'secret'),
+        database: config.get<string>('DB_DATABASE', 'wedding'),
         entities: ALL_ENTITIES,
-        synchronize: false, // skema dikelola lewat migration (npm run migration:run)
+        synchronize: config.get<string>('NODE_ENV') !== 'production',
       }),
     }),
 
@@ -36,6 +45,14 @@ import { VendorsModule } from './vendors/vendors.module.js';
     AuthModule,
     VendorsModule,
     AdminModule,
+    PlansModule,
+    RecommendationsModule,
+    DealsModule,
+    ChatModule,
+    ChatbotModule,
+    DocumentsModule,
+    SavingsModule,
+    SchedulerModule,
   ],
   controllers: [AppController],
   providers: [
@@ -45,4 +62,8 @@ import { VendorsModule } from './vendors/vendors.module.js';
     { provide: APP_GUARD, useClass: RolesGuard },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(LogMiddlewareMiddleware).forRoutes('*');
+  }
+}
