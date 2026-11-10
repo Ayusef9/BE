@@ -2,8 +2,6 @@ import { config } from 'dotenv';
 import { DataSource } from 'typeorm';
 
 config();
-
-/** Dipakai oleh TypeORM CLI (migration) dan seed. Aplikasi sendiri memakai konfigurasi di app.module.ts. */
 export default new DataSource({
   type: 'postgres',
   host: process.env.DB_HOST || 'localhost',
