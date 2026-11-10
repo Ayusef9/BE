@@ -66,3 +66,19 @@ export enum RecommendationMode {
   PACKAGE = 'package',
   ITEM = 'item',
 }
+
+export enum Gender { 
+  MALE = 'male', FEMALE = 'female'
+}
+export enum TaskPriority {
+   NORMAL = 'normal', IMPORTANT = 'important', VERY_IMPORTANT = 'very_important'
+}
+export enum NotificationType { 
+  CHAT = 'chat', DEAL = 'deal', DOCUMENT = 'document', REVIEW = 'review', SYSTEM = 'system'
+}
+export enum ReceiptValidation {
+   PENDING = 'pending', VALID = 'valid', REJECTED = 'rejected'
+} 
+export enum RecommendationSort { 
+  PRICE_ASC = 'price_asc', PRICE_DESC = 'price_desc', RATING = 'rating' 
+}
