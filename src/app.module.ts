@@ -21,6 +21,9 @@ import { ChatbotModule } from './chatbot/chatbot.module.js';
 import { DocumentsModule } from './documents/documents.module.js';
 import { SavingsModule } from './savings/savings.module.js';
 import { SchedulerModule } from './scheduler/scheduler.module.js';
+import { TasksModule } from './tasks/tasks.module.js';
+import { ReviewsModule } from './reviews/reviews.module.js';
+import { NotificationsModule } from './notifications/notifications.module.js';
 
 @Module({
   imports: [
@@ -53,6 +56,9 @@ import { SchedulerModule } from './scheduler/scheduler.module.js';
     DocumentsModule,
     SavingsModule,
     SchedulerModule,
+    TasksModule,
+    ReviewsModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [

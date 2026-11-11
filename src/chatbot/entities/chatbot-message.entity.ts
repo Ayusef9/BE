@@ -20,6 +20,9 @@ export class ChatbotMessage {
 
   @Column({ type: 'text' })
   content: string;
+  
+  @Column({ type: 'jsonb', nullable: true })
+  payload: { items: { title: string; subtitle: string }[]; suggestions: string[] } | null;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

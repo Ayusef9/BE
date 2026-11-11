@@ -19,7 +19,10 @@ import { SavingsContribution } from '../savings/entities/savings-contribution.en
 import { SavingsNote } from '../savings/entities/savings-note.entity.js';
 import { ChatbotSession } from '../chatbot/entities/chatbot-session.entity.js';
 import { ChatbotMessage } from '../chatbot/entities/chatbot-message.entity.js';
-
+import { DocumentScan } from '../documents/entities/document-scan.entity.js';
+import { Task } from '../tasks/entities/task-entity.js';
+import { Notification } from '../notifications/entities/notification-entity.js';
+import { Review } from '../reviews/entities/review-entity.js';
 /**
  * Semua entity didaftarkan di satu tempat. Wajib lengkap walau modulnya belum dibuat,
  * karena TypeORM butuh metadata semua entity yang direlasikan.
@@ -32,4 +35,5 @@ export const ALL_ENTITIES = [
   Schedule, DocumentTask, Receipt,
   SavingsGoal, SavingsContribution, SavingsNote,
   ChatbotSession, ChatbotMessage,
+  DocumentScan, Task, Notification, Review
 ];

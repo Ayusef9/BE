@@ -5,6 +5,7 @@ import { decimalTransformer } from '../../common/transformers/decimal.transforme
 import { PlanNeed } from '../../plans/entities/plan-need.entity.js';
 import { Deal } from '../../deals/entities/deal.entity.js';
 import { User } from '../../users/entities/user.entity.js';
+import { ReceiptValidation } from '../../common/enums/index.js';
 
 /**
  * Arsip bukti transaksi. OCR hanya membaca dan mengarsipkan,
@@ -63,4 +64,13 @@ export class Receipt extends AppBaseEntity {
 
   @Column({ name: 'is_confirmed', type: 'boolean', default: false })
   isConfirmed: boolean;
+
+  @Column({ name: 'validation_status', type: 'varchar', length: 20, default: ReceiptValidation.PENDING })
+  validationStatus: ReceiptValidation;
+
+  @Column({ name: 'validation_note', type: 'text', nullable: true })
+  validationNote: string | null;
+
+  @Column({ name: 'validated_at', type: 'timestamp', nullable: true })
+  validatedAt: Date | null;
 }

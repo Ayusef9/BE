@@ -1,7 +1,7 @@
 import { Column, Entity, OneToMany, OneToOne } from 'typeorm';
 import type { Relation } from 'typeorm';
 import { AppSoftDeleteEntity } from '../../common/entities/base.entity.js';
-import { Role } from '../../common/enums/index.js';
+import { Gender, Role } from '../../common/enums/index.js';
 import { DeviceToken } from './device-token.entity.js';
 import { Vendor } from '../../vendors/entities/vendor.entity.js';
 import { PlanMember } from '../../plans/entities/plan-member.entity.js';
@@ -14,7 +14,6 @@ export class User extends AppSoftDeleteEntity {
   @Column({ type: 'varchar', length: 150, unique: true })
   email: string;
 
-  // select:false -> tidak ikut terambil kecuali diminta (addSelect) saat login
   @Column({ name: 'password_hash', type: 'varchar', length: 255, select: false })
   passwordHash: string;
 
@@ -36,6 +35,33 @@ export class User extends AppSoftDeleteEntity {
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive: boolean;
 
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  nickname: string | null;
+
+  @Column({ name: 'avatar_url', type: 'varchar', length: 255, nullable: true })
+  avatarUrl: string | null;
+
+  @Column({ name: 'birth_date', type: 'date', nullable: true })
+  birthDate: string | null;
+
+  @Column({ type: 'varchar', length: 10, nullable: true })
+  gender: Gender | null;
+
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  city: string | null;
+
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  province: string | null;
+
+  @Column({ name: 'terms_accepted_at', type: 'timestamp', nullable: true })
+  termsAcceptedAt: Date | null;
+
+  @Column({ name: 'password_reset_hash', type: 'varchar', length: 64, nullable: true, select: false })
+  passwordResetHash: string | null;
+
+  @Column({ name: 'password_reset_expires_at', type: 'timestamp', nullable: true, select: false })
+  passwordResetExpiresAt: Date | null;
+
   @OneToMany(() => DeviceToken, (token: DeviceToken) => token.user)
   deviceTokens: DeviceToken[];
 
@@ -44,4 +70,5 @@ export class User extends AppSoftDeleteEntity {
 
   @OneToMany(() => PlanMember, (member: PlanMember) => member.user)
   planMembers: PlanMember[];
+
 }

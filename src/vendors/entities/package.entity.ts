@@ -35,6 +35,12 @@ export class Package extends AppSoftDeleteEntity {
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive: boolean;
 
+  @Column({ name: 'image_url', type: 'varchar', length: 255, nullable: true })
+  imageUrl: string | null;
+
+  @Column({ name: 'price_unit', type: 'varchar', length: 30, default: 'paket' })
+  priceUnit: string;
+
   @OneToMany(() => PackageItem, (pi) => pi.package, { cascade: true })
   packageItems: PackageItem[];
 }

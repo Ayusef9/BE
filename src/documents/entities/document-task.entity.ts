@@ -1,7 +1,8 @@
-import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 import type { Relation } from 'typeorm';
 import { AppBaseEntity } from '../../common/entities/base.entity.js';
 import { WeddingPlan } from '../../plans/entities/wedding-plan.entity.js';
+import { DocumentScan } from '../../documents/entities/document-scan.entity.js';
 
 @Entity({ name: 'document_tasks' })
 export class DocumentTask extends AppBaseEntity {
@@ -26,4 +27,7 @@ export class DocumentTask extends AppBaseEntity {
 
   @Column({ name: 'completed_at', type: 'timestamp', nullable: true })
   completedAt: Date | null;
+
+  @OneToMany(() => DocumentScan, (scan) => scan.task)
+  scans: DocumentScan[];
 }

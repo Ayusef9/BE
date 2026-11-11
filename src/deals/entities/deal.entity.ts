@@ -55,6 +55,12 @@ export class Deal extends AppBaseEntity {
   @Column({ name: 'responded_at', type: 'timestamp', nullable: true })
   respondedAt: Date | null;
 
+  @Column({ name: 'confirm_deadline', type: 'timestamp', nullable: true })
+  confirmDeadline: Date | null;
+
+  @Column({ name: 'confirmed_at', type: 'timestamp', nullable: true })
+  confirmedAt: Date | null;
+
   @OneToMany(() => Schedule, (schedule) => schedule.deal)
   schedules: Schedule[];
 }

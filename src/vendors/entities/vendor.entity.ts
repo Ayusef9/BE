@@ -5,6 +5,7 @@ import { VerificationStatus } from '../../common/enums/index.js';
 import { User } from '../../users/entities/user.entity.js';
 import { ServiceItem } from './service-item.entity.js';
 import { Package } from './package.entity.js';
+import { decimalTransformer } from '../../common/transformers/decimal.transformer.js';
 
 @Entity({ name: 'vendors' })
 export class Vendor extends AppSoftDeleteEntity {
@@ -32,6 +33,12 @@ export class Vendor extends AppSoftDeleteEntity {
 
   @Column({ name: 'logo_url', type: 'varchar', length: 255, nullable: true })
   logoUrl: string | null;
+
+  @Column({ name: 'rating_avg', type: 'decimal', precision: 3, scale: 2, default: 0, transformer: decimalTransformer })
+  ratingAvg: number;
+
+  @Column({ name: 'review_count', type: 'int', default: 0 })
+  reviewCount: number;
 
   @Column({
     name: 'verification_status',
