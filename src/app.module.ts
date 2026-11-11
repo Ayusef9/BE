@@ -24,6 +24,7 @@ import { SchedulerModule } from './scheduler/scheduler.module.js';
 import { TasksModule } from './tasks/tasks.module.js';
 import { ReviewsModule } from './reviews/reviews.module.js';
 import { NotificationsModule } from './notifications/notifications.module.js';
+import { DashboardModule } from './dashboard/dashboard.module.js';
 
 @Module({
   imports: [
@@ -59,6 +60,7 @@ import { NotificationsModule } from './notifications/notifications.module.js';
     TasksModule,
     ReviewsModule,
     NotificationsModule,
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [
