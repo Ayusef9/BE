@@ -36,6 +36,9 @@ export class WeddingPlan extends AppSoftDeleteEntity {
   @Column({ type: 'varchar', length: 100, nullable: true })
   concept: string | null;
 
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  city: string | null;
+
   @OneToMany(() => PlanMember, (m) => m.plan)
   members: PlanMember[];
 

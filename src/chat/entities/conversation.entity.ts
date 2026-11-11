@@ -5,6 +5,7 @@ import { WeddingPlan } from '../../plans/entities/wedding-plan.entity.js';
 import { Vendor } from '../../vendors/entities/vendor.entity.js';
 import { Message } from './message.entity.js';
 import { Deal } from '../../deals/entities/deal.entity.js';
+import { Package } from '../../vendors/entities/package.entity.js';
 
 // Satu ruang chat per (rencana, vendor)
 @Unique('uq_conversations_plan_vendor', ['planId', 'vendorId'])
@@ -29,6 +30,13 @@ export class Conversation extends AppBaseEntity {
 
   @OneToMany(() => Message, (message) => message.conversation)
   messages: Message[];
+
+  @Column({ name: 'origin_package_id', type: 'uuid', nullable: true })
+  originPackageId: string | null;
+
+  @ManyToOne(() => Package, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'origin_package_id' })
+  originPackage: Relation<Package> | null;
 
   @OneToMany(() => Deal, (deal) => deal.conversation)
   deals: Deal[];
