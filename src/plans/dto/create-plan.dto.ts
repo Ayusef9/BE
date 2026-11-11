@@ -32,4 +32,9 @@ export class CreatePlanDto {
   @IsString({ message: "Konsep harus berupa teks" })
   @MaxLength(100, { message: "Konsep maksimal 100 karakter" })
   readonly concept?: string;
+
+  @IsOptional()
+  @IsString({ message: 'Kota harus berupa teks' })
+  @MaxLength(100, { message: 'Kota maksimal 100 karakter' })
+  readonly city?: string;
 }

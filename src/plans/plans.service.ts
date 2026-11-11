@@ -20,6 +20,10 @@ import type { UpdatePlanNeedDto } from './dto/update-plan-need.dto.js';
 import { PlanMember } from './entities/plan-member.entity.js';
 import { PlanNeed } from './entities/plan-need.entity.js';
 import { WeddingPlan } from './entities/wedding-plan.entity.js';
+import { DEFAULT_DOCUMENT_TASKS } from '../documents/default-document-task.js';
+import { DocumentTask } from '../documents/entities/document-task.entity.js';
+import { buildDefaultTasks } from '../tasks/default-tasks.js';
+import { Task } from '../tasks/entities/task-entity.js';
 
 const MAX_MEMBERS = 2; // satu rencana dikelola sepasang calon pengantin
 
@@ -74,23 +78,47 @@ export class PlansService {
 
   // ---------------------------------------------------------------- rencana
 
-  /** Membuat rencana, menjadikan pembuatnya owner, dan menyiapkan daftar kebutuhan dari semua kategori. */
+  /** Membuat rencana, menjadikan pembuatnya owner, dan menyiapkan daftar kebutuhan serta tugas bawaan. */
   async create(userId: string, dto: CreatePlanDto) {
     this.assertFutureDate(dto.weddingDate);
 
     const planId = await this.dataSource.transaction(async (manager) => {
-      const plan = await manager.save(manager.create(WeddingPlan, { ...dto, totalBudget: dto.totalBudget ?? 0 }));
+      // 1. Buat WeddingPlan & Member (Owner)
+      const plan = await manager.save(
+        manager.create(WeddingPlan, { ...dto, totalBudget: dto.totalBudget ?? 0 }),
+      );
       await manager.insert(PlanMember, { planId: plan.id, userId, memberRole: MemberRole.OWNER });
 
+      // 2. Buat Default Plan Needs (Kebutuhan Vendor)
       const categories = await manager.find(ServiceCategory);
-      if (categories.length) {
+      if (categories.length > 0) {
         await manager.insert(
           PlanNeed,
-          categories.map((c) => ({ planId: plan.id, categoryId: c.id, status: NeedStatus.BELUM_DIPILIH })),
+          categories.map((c) => ({
+            planId: plan.id,
+            categoryId: c.id,
+            status: NeedStatus.BELUM_DIPILIH,
+          })),
         );
       }
+
+      // 3. Buat Default Persiapan Tasks
+      const defaultTasks = buildDefaultTasks(plan.id, dto.weddingDate);
+      if (defaultTasks.length > 0) {
+        await manager.insert(Task, defaultTasks);
+      }
+
+      // 4. Buat Default Document Tasks (Administrasi Berkas)
+      if (DEFAULT_DOCUMENT_TASKS.length > 0) {
+        await manager.insert(
+          DocumentTask,
+          DEFAULT_DOCUMENT_TASKS.map((title) => ({ planId: plan.id, title })),
+        );
+      }
+
       return plan.id;
     });
+
     return this.findOne(userId, planId);
   }
 
@@ -108,7 +136,7 @@ export class PlansService {
       where: { id: planId },
       relations: { members: { user: true } },
     });
-    
+
     return {
       ...plan,
       members: plan.members.map((m) => ({
@@ -195,11 +223,13 @@ export class PlansService {
       throw new BadRequestException('Isi tanggal pernikahan terlebih dahulu untuk membuat timeline');
     }
     const today = todayJakarta();
-    const base = new Date(`${plan.weddingDate}T00:00:00Z`).getTime();
+    const [year, month, day] = plan.weddingDate.split('-').map(Number);
+    const weddingTime = Date.UTC(year, month - 1, day);
 
     return MILESTONES.map((m) => {
-      const date = new Date(base - m.daysBefore * 86_400_000).toISOString().slice(0, 10);
-      return { ...m, date, isPast: date < today };
+      const milestoneDate = new Date(weddingTime - m.daysBefore * 86_400_000);
+      const dateStr = milestoneDate.toISOString().slice(0, 10);
+      return { ...m, date: dateStr, isPast: dateStr < today };
     });
   }
 
