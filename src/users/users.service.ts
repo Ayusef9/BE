@@ -1,11 +1,14 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, Repository } from 'typeorm';
 import { Role } from '../common/enums/index.js';
 import { isUniqueViolation } from '../common/utils/db-errors.js';
 import { paginate } from '../common/utils/paginate.js';
+import { comparePassword, hashPassword } from '../common/utils/password.js';
+import { publicUrl } from '../common/utils/upload.js';
 import { DeviceToken } from './entities/device-token.entity.js';
 import { User } from './entities/user.entity.js';
+import type { ChangePasswordDto } from './dto/change-password.dto.js';
 import type { QueryUserDto } from './dto/query-user.dto.js';
 import type { RegisterDeviceTokenDto } from './dto/register-device-token.dto.js';
 import type { UpdateUserDto } from './dto/update-user.dto.js';
@@ -16,7 +19,18 @@ export interface CreateUserInput {
   passwordHash: string;
   role: Role;
   phone?: string | null;
+  termsAcceptedAt?: Date | null;
 }
+
+const calcAge = (birthDate: string | null) => {
+  if (!birthDate) return null;
+  const b = new Date(birthDate);
+  const now = new Date();
+  let age = now.getFullYear() - b.getFullYear();
+  const m = now.getMonth() - b.getMonth();
+  if (m < 0 || (m === 0 && now.getDate() < b.getDate())) age--;
+  return age;
+};
 
 @Injectable()
 export class UsersService {
@@ -62,10 +76,55 @@ export class UsersService {
     }
   }
 
+  /** Profil untuk layar "Profil Saya", lengkap dengan usia yang dihitung dari tanggal lahir. */
+  async getProfile(id: string) {
+    const user = await this.findById(id);
+    return { ...user, age: calcAge(user.birthDate) };
+  }
+
   async updateProfile(id: string, dto: UpdateUserDto): Promise<User> {
     const user = await this.findById(id);
     Object.assign(user, dto);
     return this.users.save(user);
+  }
+
+  async setAvatar(id: string, file?: Express.Multer.File) {
+    if (!file) throw new BadRequestException('File gambar (jpg, png, webp; maks 5 MB) wajib diunggah');
+    await this.users.update({ id }, { avatarUrl: publicUrl('avatars', file) });
+    return this.findById(id);
+  }
+
+  async changePassword(id: string, dto: ChangePasswordDto) {
+    const user = await this.users.createQueryBuilder('u').addSelect('u.passwordHash').where('u.id = :id', { id }).getOne();
+    if (!user) throw new NotFoundException('User tidak ditemukan');
+    if (!(await comparePassword(dto.oldPassword, user.passwordHash))) {
+      throw new BadRequestException('Password lama tidak sesuai');
+    }
+    if (dto.newPassword !== dto.confirmPassword) {
+      throw new BadRequestException('Konfirmasi password tidak sama dengan password baru');
+    }
+    // refresh token dihapus supaya perangkat lain harus login ulang
+    await this.users.update({ id }, { passwordHash: await hashPassword(dto.newPassword), refreshTokenHash: null });
+  }
+
+  // ---- reset password (lupa password)
+  async setPasswordReset(id: string, hash: string, expiresAt: Date) {
+    await this.users.update({ id }, { passwordResetHash: hash, passwordResetExpiresAt: expiresAt });
+  }
+
+  findByResetHash(hash: string) {
+    return this.users
+      .createQueryBuilder('u')
+      .addSelect(['u.passwordResetHash', 'u.passwordResetExpiresAt'])
+      .where('u.passwordResetHash = :hash', { hash })
+      .getOne();
+  }
+
+  async applyPasswordReset(id: string, passwordHash: string) {
+    await this.users.update(
+      { id },
+      { passwordHash, passwordResetHash: null, passwordResetExpiresAt: null, refreshTokenHash: null },
+    );
   }
 
   async setRefreshTokenHash(id: string, hash: string | null) {
