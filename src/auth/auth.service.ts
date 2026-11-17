@@ -1,5 +1,5 @@
-import { createHash, randomUUID, timingSafeEqual } from 'node:crypto';
-import { ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
+import { BadRequestException, ForbiddenException, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import type { JwtSignOptions } from '@nestjs/jwt';
@@ -8,8 +8,10 @@ import type { JwtPayload } from '../common/types/auth-user.js';
 import { comparePassword, hashPassword } from '../common/utils/password.js';
 import type { User } from '../users/entities/user.entity.js';
 import { UsersService } from '../users/users.service.js';
+import type { ForgetPasswordDto } from './dto/forget-password.dto.js';
 import type { LoginDto } from './dto/login.dto.js';
 import type { RegisterDto } from './dto/register.dto.js';
+import type { ResetPasswordDto } from './dto/reset-password.dto.js';
 
 export interface AuthResult {
   user: { id: string; name: string; email: string; role: Role };
@@ -26,6 +28,8 @@ const sha256 = (value: string) => createHash('sha256').update(value).digest('hex
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly usersService: UsersService,
     private readonly jwt: JwtService,
@@ -33,11 +37,15 @@ export class AuthService {
   ) {}
 
   async register(dto: RegisterDto): Promise<AuthResult> {
+    if (dto.password !== dto.confirmPassword) {
+      throw new BadRequestException('Konfirmasi password tidak sama dengan password');
+    }
     const user = await this.usersService.create({
       name: dto.name,
       email: dto.email,
       passwordHash: await hashPassword(dto.password),
       role: Role.USER, // register publik selalu role user; vendor lewat /vendors/register
+      termsAcceptedAt: new Date(),
     });
     return this.issueTokens(user);
   }
@@ -48,6 +56,32 @@ export class AuthService {
     if (!user || !valid) throw new UnauthorizedException('Email atau password salah');
     if (!user.isActive) throw new ForbiddenException('Akun dinonaktifkan');
     return this.issueTokens(user);
+  }
+
+  /** Selalu membalas sama, supaya tidak bisa dipakai untuk menebak email yang terdaftar. */
+  async forgotPassword(dto: ForgetPasswordDto) {
+    const user = await this.usersService.findByEmail(dto.email);
+    if (user?.isActive) {
+      const token = randomBytes(32).toString('hex');
+      await this.usersService.setPasswordReset(user.id, sha256(token), new Date(Date.now() + 30 * 60 * 1000));
+      // TODO kirim email berisi token (mis. Nodemailer). Selama pengembangan token ditulis ke log.
+      if (this.config.get<string>('NODE_ENV') !== 'production') {
+        this.logger.log(`Token reset password untuk ${user.email}: ${token}`);
+      }
+    }
+    return { message: 'Jika email terdaftar, instruksi reset password telah dikirim' };
+  }
+
+  async resetPassword(dto: ResetPasswordDto) {
+    if (dto.newPassword !== dto.confirmPassword) {
+      throw new BadRequestException('Konfirmasi password tidak sama dengan password baru');
+    }
+    const user = await this.usersService.findByResetHash(sha256(dto.token));
+    if (!user?.passwordResetExpiresAt || user.passwordResetExpiresAt < new Date()) {
+      throw new BadRequestException('Token tidak valid atau sudah kedaluwarsa');
+    }
+    await this.usersService.applyPasswordReset(user.id, await hashPassword(dto.newPassword));
+    return { message: 'Password berhasil diubah. Silakan login kembali' };
   }
 
   async refresh(refreshToken: string): Promise<AuthResult> {
